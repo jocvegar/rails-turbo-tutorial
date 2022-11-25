@@ -2,7 +2,7 @@ class QuotesController < ApplicationController
   before_action :set_quote, only: %i[show edit update destroy]
 
   def index
-    @quotes = Quote.ordered
+    @quotes = current_company.quotes.ordered
   end
 
   def show; end
@@ -12,11 +12,12 @@ class QuotesController < ApplicationController
   end
 
   def create
-    @quote = Quote.new(quote_params)
+    @quote = current_company.quotes.build(quote_params)
+
     if @quote.save
       respond_to do |format|
         format.html { redirect_to quotes_path, notice: "Quote was successfully created." }
-        format.turbo_stream
+        format.turbo_stream { flash.now[:notice] = "Quote was successfully created." }
       end
     else
       render :new, status: :unprocessable_entity
@@ -27,7 +28,10 @@ class QuotesController < ApplicationController
 
   def update
     if @quote.update(quote_params)
-      redirect_to quotes_path, notice: "Quote was successfully updated."
+      respond_to do |format|
+        format.html { redirect_to quotes_path, notice: "Quote was successfully updated." }
+        format.turbo_stream { flash.now[:notice] = "Quote was successfully updated." }
+      end
     else
       render :edit, status: :unprocessable_entity
     end
@@ -38,14 +42,14 @@ class QuotesController < ApplicationController
 
     respond_to do |format|
       format.html { redirect_to quotes_path, notice: message }
-      format.turbo_stream
+      format.turbo_stream { flash.now[:notice] = message }
     end
   end
 
   private
 
   def set_quote
-    @quote = Quote.find(params[:id])
+    @quote = current_company.quotes.find(params[:id])
   end
 
   def quote_params
